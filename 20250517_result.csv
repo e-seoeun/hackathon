@@ -1,4 +1,4 @@
-﻿norad_id,object_name,epoch_time_utc,site_lat_deg,site_lon_deg,site_alt_m,today_dv,prev_dv,dv_diff_percent,today_dm,prev_dm,dm_diff,d1,d2,prev_epoch_time_utc,epoch_diff_sec,Bstar,Inc_deg,RAAN_deg,AP_deg,MA_deg,MM_rev/day
+norad_id,object_name,epoch_time_utc,site_lat_deg,site_lon_deg,site_alt_m,today_dv,prev_dv,dv_diff_percent,today_dm,prev_dm,dm_diff,d1,d2,prev_epoch_time_utc,epoch_diff_sec,Bstar,Inc_deg,RAAN_deg,AP_deg,MA_deg,MM_rev/day
 11,VANGUARD 2,2025-05-16T05:30:32Z,-0.0000,-170.0432,0.0,0.5529,0.5530,-0.0126,55.1085,55.1072,0.0013,0.002215,-0.2768,2025-05-15T09:21:29Z,72542.902,8.028900e-04,32.8702,146.7788,318.9655,31.0313,11.89768080
 20,VANGUARD 3,2025-05-16T18:09:23Z,0.0000,105.9012,0.0,0.2330,0.2330,-0.0000,54.5809,54.5809,-0.0000,0.000707,-0.1039,2025-05-15T11:10:36Z,111527.794,3.858600e-04,33.3413,252.9564,90.1104,288.6953,11.60643752
 22,EXPLORER 7,2025-05-16T11:10:19Z,0.0000,-156.4215,0.0,0.9378,0.9379,-0.0075,37.0581,37.0587,-0.0006,-0.023272,-0.4429,2025-05-15T19:22:46Z,56852.671,2.950600e-04,50.2756,245.5787,337.5530,22.1371,15.18640447
