@@ -8,6 +8,7 @@ hackathon
             .
             .
             .
+    spacetrack_auth.txt (ID 및 Password 입력)
         ㄴtip
             tip_YYYYMMDD.csv
             .
