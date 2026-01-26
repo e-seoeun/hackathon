@@ -35,7 +35,7 @@ spacetrack에서 원하는 기간동안의 decay message와 tip message를 다�
 
 * process1
 입력한 날짜의 TLE를 불러와 고도 2,000km이하일 경우 Epoch기준 subpoint에서의 궤적(총 10초)를 생성합니다.
-기준날짜(입력한 날짜) TLE도 함께 불러온 후 기준날짜와 동일한 Norad ID의 TLE epoch가 하루 이상의 차이가 날 경우 동일 시간동안 전파합니다.
+기준날짜(입력한 날짜) TLE도 함께 불러온 후 기준날짜와 동일한 Norad ID의 TLE epoch가 90분 이상의 차이가 날 경우 동일 시간동안 전파합니다.
 두 날짜의 TLE에서 생성한 전파 궤적과 궤도요소 정보를 YYYYMMDD_result_raw.csv파일로 중간저장합니다.
 
 * process2
