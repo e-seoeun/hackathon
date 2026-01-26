@@ -14,10 +14,6 @@
 #   today_ra_deg, today_dec_deg, today_az_deg, today_el_deg,
 #   prev_ra_deg,  prev_dec_deg,  prev_az_deg,  prev_el_deg,
 #   prev_epoch_time_utc, epoch_diff_sec
-#
-# 실행 예:
-#   python skyfield_tle_epoch_subsat_track_csv.py \
-#       --today today.tle --prev prev_day.tle --out out.csv
 # -----------------------------------------------------------------------------
 
 from __future__ import annotations
