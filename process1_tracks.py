@@ -8,7 +8,7 @@
 #   prev TLE epoch와 today TLE epoch 차이가 90분(=5400s) 이상일 때만
 #   동일한 시각(t0±5s)에 대해 prev TLE로도 전파하여 비교값 계산
 # - CSV 출력:
-#   norad_id, sat_name, epoch_time_utc,
+#   norad_id, object_name, epoch_time_utc,
 #   site_lat_deg, site_lon_deg, site_alt_m,
 #   t_offset_s,
 #   today_ra_deg, today_dec_deg, today_az_deg, today_el_deg,
@@ -24,10 +24,11 @@ from __future__ import annotations
 
 import argparse
 import csv
+import math
 
 from typing import Dict, List, Optional, Tuple
-
 from skyfield.api import EarthSatellite, load, wgs84
+
 
 # --------------------------------------------
 # Helpers
@@ -158,6 +159,25 @@ def is_leo_by_epoch_altitude(sat: EarthSatellite, max_alt_km=2000.0) -> bool:
     return alt_km <= max_alt_km
 
 
+def tle_elements_from_sat(sat: EarthSatellite) -> Tuple[float, float, float, float, float, float]:
+
+    m = sat.model  # sgp4 model object
+
+    bstar = float(getattr(m, "bstar", float("nan")))
+
+    inc_deg  = float(getattr(m, "inclo", float("nan"))) * 180.0 / math.pi
+    raan_deg = float(getattr(m, "nodeo", float("nan"))) * 180.0 / math.pi
+    argp_deg = float(getattr(m, "argpo", float("nan"))) * 180.0 / math.pi
+    ma_deg   = float(getattr(m, "mo",    float("nan"))) * 180.0 / math.pi
+
+    # mean motion: sgp4는 보통 rad/min 단위(no_kozai)를 가짐
+    n_rad_per_min = float(getattr(m, "no_kozai", float("nan")))
+    mm_rev_per_day = n_rad_per_min * (1440.0 / (2.0 * math.pi))  # rev/day
+
+    return bstar, inc_deg, raan_deg, argp_deg, ma_deg, mm_rev_per_day
+
+
+
 # --------------------------------------------
 # Main
 # --------------------------------------------
@@ -178,7 +198,7 @@ def main():
 
     fieldnames = [
         "norad_id",
-        "sat_name",
+        "object_name",
         "epoch_time_utc",
         "site_lat_deg",
         "site_lon_deg",
@@ -194,6 +214,12 @@ def main():
         "prev_el_deg",
         "prev_epoch_time_utc",
         "epoch_diff_sec",
+        "Bstar",
+        "Inc_deg",
+        "RAAN_deg",
+        "AP_deg",
+        "MA_deg",
+        "MM_rev/day"
     ]
 
     with open(args.out, "w", newline="", encoding="utf-8-sig") as f:
@@ -202,6 +228,7 @@ def main():
 
         for satno, item_today in today_map.items():
             sat_today: EarthSatellite = item_today["sat"]
+            bstar, inc_deg, raan_deg, ap_deg, ma_deg, mm_rpd = tle_elements_from_sat(sat_today)
 
             if not is_leo_by_epoch_altitude(sat_today, max_alt_km=2000.0):
                 continue
@@ -248,7 +275,7 @@ def main():
                 w.writerow(
                     {
                         "norad_id": satno,
-                        "sat_name": name,
+                        "object_name": name,
                         "epoch_time_utc": _time_iso_utc(t0),
                         "site_lat_deg": f"{site_lat_deg:.4f}",
                         "site_lon_deg": f"{site_lon_deg:.4f}",
@@ -264,10 +291,18 @@ def main():
                         "prev_el_deg": f"{_safe_float(el_p):.4f}",
                         "prev_epoch_time_utc": prev_epoch_iso,
                         "epoch_diff_sec": f"{_safe_float(epoch_diff_sec):.3f}",
+                        #TLE에서 얻을 수 있는 정보들 추가함!!
+                        "Bstar": f"{_safe_float(bstar):.6e}",
+                        "Inc_deg": f"{_safe_float(inc_deg):.4f}",
+                        "RAAN_deg": f"{_safe_float(raan_deg):.4f}",
+                        "AP_deg": f"{_safe_float(ap_deg):.4f}",
+                        "MA_deg": f"{_safe_float(ma_deg):.4f}",
+                        "MM_rev/day": f"{_safe_float(mm_rpd):.8f}",
                     }
                 )
 
-if __name__ == "__main__":
+
+'''if __name__ == "__main__":
     import sys
     if len(sys.argv) == 1:
         sys.argv += [
@@ -275,5 +310,5 @@ if __name__ == "__main__":
             "--prev",  "repository/tle_data/20250516.tle",
             "--out",   f"20250517_result.csv",
         ]
-    main()
+    main()'''
 

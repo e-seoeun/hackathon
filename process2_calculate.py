@@ -2,9 +2,11 @@ import csv
 import math
 from collections import defaultdict
 from typing import Dict, Tuple
+import sys
 
-IN_CSV = "20250517_result.csv"
-OUT_CSV = "20250517_result_dv_dm_d1d2.csv"
+IN_CSV = sys.argv[1]
+OUT_CSV = sys.argv[2]
+
 
 D2R = math.pi / 180.0
 R2D = 180.0 / math.pi
@@ -107,7 +109,6 @@ def d1_d2_from_tracks_gnomonic_deg(
     pra_m1, pdec_m1, pra_0, pdec_0, pra_p1, pdec_p1,
 ):
     """
-    analyze_and_write_results2의 D1/D2 개념을 그대로 사용.
     - today 3점과 prev 3점을 today (ra0,dec0) 기준 gnomonic xy로 투영
     - 각 트랙의 중심 m, 방향 u를 만들고
     - d = m_prev - m_today 를 today 트랙의 (수직 n, 평행 u)로 분해
@@ -147,7 +148,7 @@ def d1_d2_from_tracks_gnomonic_deg(
 
     D1 = d_x*n_x + d_y*n_y      # 수직 성분
     D2 = -(d_x*ut_x + d_y*ut_y)    # 평행 성분
-    cos_theta = abs(ut_x*up_x + ut_y*up_y) # 방향 유사도 알아볼 때 사용.
+    #cos_theta = abs(ut_x*up_x + ut_y*up_y) # 방향 유사도 알아볼 때 사용했는데 해커톤에서는 필요 없음.
 
     return D1, D2
 
@@ -181,7 +182,7 @@ def main():
 
     out_fields = [
         "norad_id",
-        "sat_name",
+        "object_name",
         "epoch_time_utc",
         "site_lat_deg",
         "site_lon_deg",
@@ -196,6 +197,13 @@ def main():
         "d2",  # horizontal (RA-direction, scaled by cos(Dec0))
         "prev_epoch_time_utc",
         "epoch_diff_sec",
+        # 추가: TLE 파라미터
+        "Bstar",
+        "Inc_deg",
+        "RAAN_deg",
+        "AP_deg",
+        "MA_deg",
+        "MM_rev/day",
     ]
 
     with open(OUT_CSV, "w", encoding="utf-8-sig", newline="") as f:
@@ -211,7 +219,7 @@ def main():
             row_p1 = samp[+1]
 
             norad_id, epoch, site_lat, site_lon, site_alt = key
-            sat_name = (row_0.get("sat_name") or row_m1.get("sat_name") or row_p1.get("sat_name") or "").strip()
+            object_name = (row_0.get("object_name") or row_m1.get("object_name") or row_p1.get("object_name") or "").strip()
 
             # today points
             tra_m1 = to_float(row_m1.get("today_ra_deg")); tdec_m1 = to_float(row_m1.get("today_dec_deg"))
@@ -246,9 +254,17 @@ def main():
             prev_epoch_iso = (row_0.get("prev_epoch_time_utc") or "").strip()
             epoch_diff_sec = to_float(row_0.get("epoch_diff_sec"))
 
+            #TLE정보 추가
+            bstar = (row_0.get("Bstar") or "").strip()
+            inc = (row_0.get("Inc_deg") or "").strip()
+            raan = (row_0.get("RAAN_deg") or "").strip()
+            ap = (row_0.get("AP_deg") or "").strip()
+            ma = (row_0.get("MA_deg") or "").strip()
+            mm = (row_0.get("MM_rev/day") or "").strip()
+
             w.writerow({
                 "norad_id": norad_id,
-                "sat_name": sat_name,
+                "object_name": object_name,
                 "epoch_time_utc": epoch,
                 "site_lat_deg": site_lat,
                 "site_lon_deg": site_lon,
@@ -263,6 +279,12 @@ def main():
                 "d2": f"{d2_deg:.4f}",
                 "prev_epoch_time_utc": prev_epoch_iso,
                 "epoch_diff_sec": f"{epoch_diff_sec:.3f}" if is_finite(epoch_diff_sec) else "nan",
+                "Bstar": bstar,
+                "Inc_deg": inc,
+                "RAAN_deg": raan,
+                "AP_deg": ap,
+                "MA_deg": ma,
+                "MM_rev/day": mm,
             })
 
     print(f"wrote: {OUT_CSV}")
