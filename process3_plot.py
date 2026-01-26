@@ -6,8 +6,8 @@ import matplotlib.pyplot as plt
 
 from astropy.wcs import WCS
 
-IN_TRACK_CSV = "20250517_result.csv"              # t_offset 포함된 원본
-IN_DVDM_CSV  = "20250517_result_dv_dm_d1d2.csv"   # dv/dm/d1/d2 요약
+IN_TRACK_CSV = "20250517_result_raw.csv"            
+IN_DVDM_CSV  = "20250517_result.csv"   
 D2R = math.pi / 180.0
 
 def to_float(x):
