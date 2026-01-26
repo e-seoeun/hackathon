@@ -16,3 +16,6 @@ YYYYMMDD_result_raw.csv를 불러온 후 기준날짜와 전날짜 기준 Appare
 
 * main
 process1-2과정을 자동으로 진행합니다.
+
+
+![example](figures/example.png)
