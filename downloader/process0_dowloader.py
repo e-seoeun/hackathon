@@ -1,3 +1,8 @@
+'''
+spacetrack_auth.txt파일에 spacetrack의 ID와 Password를 입력한 후 실행됩니다.
+start day부터 end day의 전 날까지의 기간동안 spacettrack에 저장되어있는 decay message와 tip message를 다운받아 날짜별로 저장합니다.
+SSL관련 내용은 GPT가 알려준 방법입니다.
+'''
 from __future__ import annotations
 
 import csv
@@ -11,18 +16,17 @@ import urllib3
 import time
 
 
-# ----------------------------
+
 # SSL / Proxy CA settings
-# ----------------------------
+# 회사컴퓨터에서 접근이 안되어서, GPT가 추천한 아래 방법으로 접속하였습니다.
 CA_BUNDLE = None  # 예: r"C:\Users\seoeunlee\certs\kari_proxy_ca.pem"
 VERIFY_SSL = False  # 테스트: False, 장기 운용: True + CA_BUNDLE 권장
 
 if not VERIFY_SSL:
     urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
-# ----------------------------
+
 # Space-Track endpoints
-# ----------------------------
 BASE = "https://www.space-track.org"
 LOGIN_URL = f"{BASE}/ajaxauth/login"
 QUERY_BASE = f"{BASE}/basicspacedata/query"
@@ -95,7 +99,7 @@ def detect_date_field(sample_row: Dict, candidates: List[str]) -> str:
         if c in keys:
             return c
 
-    # 마지막 안전장치: 값이 날짜처럼 보이는 첫 키
+    # 마지막 안전장치(?)
     for k, v in sample_row.items():
         if isinstance(v, str) and len(v) >= 10 and v[4:5] == "-" and v[7:8] == "-":
             return k
