@@ -1,37 +1,39 @@
 # main.py
 '''
 hackathon
-ㄴdownloder
-    ㄴspacetrack_messages
-        ㄴdecay
-            decay_YYYYMMDD.csv
-            .
-            .
-            .
+ㄴdownloader
+    process0_downloader.py
+    process0_tle_downloader.py
     spacetrack_auth.txt (ID 및 Password 입력)
-        ㄴtip
-            tip_YYYYMMDD.csv
-            .
-            .
-            .
-    process0_downladder.py
-    spacetrack_auth.txt
-
 ㄴrepository
+    ㄴdecay_data
+        decay_YYYYMMDD.csv
+        .
+        .
+        .
+    ㄴtip_data
+        tip_YYYYMMDD.csv
+        .
+        .
+        .
     ㄴtle_data
         YYYYMMDD.tle (날짜별 tle데이터가 미리 다운받아 있어야 합니다.)
         .
         .
         .
-
 main.py
 process1_track.py
 process2_calculate.py
 process3_plot.py
 
 
-* process0 
+
+* process0_downloader
 spacetrack에서 원하는 기간동안의 decay_data message와 tip_data message를 다운받아 날짜별로 저장합니다.
+spacetrack ID와 Password를 spacetrack_auth에 저장하는 과정이 필요합니다.
+
+* process0_tle_downloader
+spacetrack에서 현재 기준의 tle카탈로그를 저장합니다.
 spacetrack ID와 Password를 spacetrack_auth에 저장하는 과정이 필요합니다.
 
 * process1 
