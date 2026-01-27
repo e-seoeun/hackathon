@@ -53,11 +53,15 @@ from process1_tracks import main as run_tle
 import subprocess
 import sys
 from datetime import datetime, timedelta
+from pathlib import Path
 
 today = input("INPUT YYYYMMDD : ").strip()
 
 dt = datetime.strptime(today, "%Y%m%d")
 prev = (dt - timedelta(days=1)).strftime("%Y%m%d")
+
+out_path = Path(f"result/result_raw/{today}_result_raw.csv")
+out_path.parent.mkdir(parents=True, exist_ok=True)
 
 if __name__ == "__main__":
     # 1) TLE → epoch track CSV
@@ -65,7 +69,7 @@ if __name__ == "__main__":
         "main.py",
         "--today", f"repository/tle_data/{today}.tle",
         "--prev",  f"repository/tle_data/{prev}.tle",
-        "--out",   f"{today}_result_raw.csv",
+        "--out",   f"result/result_raw/{today}_result_raw.csv",
     ]
     run_tle()
 
@@ -73,6 +77,6 @@ if __name__ == "__main__":
     subprocess.run([
         sys.executable,
         "process2_calculate.py",
-        f"{today}_result_raw.csv",
-        f"{today}_result.csv",
+        f"result/result_raw/{today}_result_raw.csv",
+        f"result/{today}_result.csv",
     ], check=True)

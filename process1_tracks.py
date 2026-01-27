@@ -9,7 +9,7 @@
 #   동일한 시각(t0±5s)에 대해 prev TLE로도 전파하여 비교값 계산
 # - CSV 출력:
 #   norad_id, object_name, epoch_time_utc,
-#   site_lat_deg, site_lon_deg, site_alt_m,
+#   site_lat_deg, site_lon_deg
 #   t_offset_s,
 #   today_ra_deg, today_dec_deg, today_az_deg, today_el_deg,
 #   prev_ra_deg,  prev_dec_deg,  prev_az_deg,  prev_el_deg,
@@ -148,11 +148,30 @@ def topocentric_angles(sat: EarthSatellite, t, site):
     el_deg = alt.degrees
     return ra_deg, dec_deg, az_deg, el_deg
 
-def is_leo_by_epoch_altitude(sat: EarthSatellite, max_alt_km=2000.0) -> bool:
-    t0 = sat.epoch
-    sp = sat.at(t0).subpoint()
-    alt_km = sp.elevation.m / 1000.0
-    return alt_km <= max_alt_km
+def mean_altitude_km_from_tle(sat: EarthSatellite) -> float:
+    """
+    TLE mean motion(no_kozai)로부터 semi-major axis a를 구해
+    mean altitude ~= a - R_E (km)를 반환
+    """
+    m = sat.model
+    n_rad_per_min = float(getattr(m, "no_kozai", float("nan")))
+    if (not math.isfinite(n_rad_per_min)) or n_rad_per_min <= 0:
+        return float("nan")
+
+    mu_km3_s2 = 398600.4418
+    re_km = 6378.137  # WGS-84 equatorial radius
+
+    n_rad_per_s = n_rad_per_min / 60.0
+    a_km = (mu_km3_s2 / (n_rad_per_s ** 2)) ** (1.0 / 3.0)
+
+    return a_km - re_km
+
+def is_leo_by_mean_altitude(sat: EarthSatellite, max_alt_km=2000.0) -> bool:
+    h_km = mean_altitude_km_from_tle(sat)
+    if not math.isfinite(h_km):
+        return False
+    return h_km <= max_alt_km
+
 
 
 def tle_elements_from_sat(sat: EarthSatellite) -> Tuple[float, float, float, float, float, float]:
@@ -198,7 +217,6 @@ def main():
         "epoch_time_utc",
         "site_lat_deg",
         "site_lon_deg",
-        "site_alt_m",
         "t_offset_s",
         "today_ra_deg",
         "today_dec_deg",
@@ -215,7 +233,8 @@ def main():
         "RAAN_deg",
         "AP_deg",
         "MA_deg",
-        "MM_rev/day"
+        "MM_rev/day",
+        "MeanAlt_km",
     ]
 
     with open(args.out, "w", newline="", encoding="utf-8-sig") as f:
@@ -226,7 +245,8 @@ def main():
             sat_today: EarthSatellite = item_today["sat"]
             bstar, inc_deg, raan_deg, ap_deg, ma_deg, mm_rpd = tle_elements_from_sat(sat_today)
 
-            if not is_leo_by_epoch_altitude(sat_today, max_alt_km=2000.0):
+            mean_alt_km = mean_altitude_km_from_tle(sat_today)
+            if not is_leo_by_mean_altitude(sat_today, max_alt_km=2000.0):
                 continue
 
             name = item_today["name"] or ""
@@ -275,7 +295,6 @@ def main():
                         "epoch_time_utc": _time_iso_utc(t0),
                         "site_lat_deg": f"{site_lat_deg:.4f}",
                         "site_lon_deg": f"{site_lon_deg:.4f}",
-                        "site_alt_m": "0.0",
                         "t_offset_s": dt,
                         "today_ra_deg": f"{_safe_float(ra_t):.4f}",
                         "today_dec_deg": f"{_safe_float(dec_t):.4f}",
@@ -294,16 +313,7 @@ def main():
                         "AP_deg": f"{_safe_float(ap_deg):.4f}",
                         "MA_deg": f"{_safe_float(ma_deg):.4f}",
                         "MM_rev/day": f"{_safe_float(mm_rpd):.8f}",
+                        "MeanAlt_km": f"{_safe_float(mean_alt_km):.4f}",
+
                     }
                 )
-
-
-'''if __name__ == "__main__":
-    import sys
-    if len(sys.argv) == 1:
-        sys.argv += [
-            "--today", "repository/tle_data/20250517.tle",
-            "--prev",  "repository/tle_data/20250516.tle",
-            "--out",   f"20250517_result.csv",
-        ]
-    main()'''

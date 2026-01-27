@@ -154,7 +154,7 @@ def d1_d2_from_tracks_gnomonic_deg(
 
 
 
-# key: (norad_id, epoch_time_utc, site_lat, site_lon, site_alt_m)
+# key: (norad_id, epoch_time_utc, site_lat, site_lon)
 Key = Tuple[str, str, str, str, str]
 
 def main():
@@ -167,7 +167,6 @@ def main():
             epoch = (row.get("epoch_time_utc") or "").strip()
             site_lat = (row.get("site_lat_deg") or "").strip()
             site_lon = (row.get("site_lon_deg") or "").strip()
-            site_alt = (row.get("site_alt_m") or "").strip()
 
             try:
                 t_offset = int(float(row.get("t_offset_s")))
@@ -176,7 +175,7 @@ def main():
             if t_offset not in (-1, 0, +1):
                 continue
 
-            key: Key = (norad_id, epoch, site_lat, site_lon, site_alt)
+            key: Key = (norad_id, epoch, site_lat, site_lon)
             groups[key][t_offset] = row
 
 
@@ -186,15 +185,14 @@ def main():
         "epoch_time_utc",
         "site_lat_deg",
         "site_lon_deg",
-        "site_alt_m",
-        "today_dv",
-        "prev_dv",
-        "dv_diff_percent",
-        "today_dm",
-        "prev_dm",
-        "dm_diff",
-        "d1",  # vertical (Dec-direction)
-        "d2",  # horizontal (RA-direction, scaled by cos(Dec0))
+        "today_AV",
+        "prev_AV",
+        "DV_percent",
+        "today_MA",
+        "prev_MA",
+        "DA",
+        "D1",  # vertical (Dec-direction)
+        "D2",  # horizontal (RA-direction, scaled by cos(Dec0))
         "prev_epoch_time_utc",
         "epoch_diff_sec",
         # 추가: TLE 파라미터
@@ -204,6 +202,7 @@ def main():
         "AP_deg",
         "MA_deg",
         "MM_rev/day",
+        "MeanAlt_km"
     ]
 
     with open(OUT_CSV, "w", encoding="utf-8-sig", newline="") as f:
@@ -218,7 +217,7 @@ def main():
             row_0  = samp[0]
             row_p1 = samp[+1]
 
-            norad_id, epoch, site_lat, site_lon, site_alt = key
+            norad_id, epoch, site_lat, site_lon = key
             object_name = (row_0.get("object_name") or row_m1.get("object_name") or row_p1.get("object_name") or "").strip()
 
             # today points
@@ -261,6 +260,7 @@ def main():
             ap = (row_0.get("AP_deg") or "").strip()
             ma = (row_0.get("MA_deg") or "").strip()
             mm = (row_0.get("MM_rev/day") or "").strip()
+            malt = (row_0.get("MeanAlt_km") or "").strip()
 
             w.writerow({
                 "norad_id": norad_id,
@@ -268,15 +268,14 @@ def main():
                 "epoch_time_utc": epoch,
                 "site_lat_deg": site_lat,
                 "site_lon_deg": site_lon,
-                "site_alt_m": site_alt,
-                "today_dv": f"{today_dv:.4f}",
-                "prev_dv": f"{prev_dv:.4f}",
-                "dv_diff_percent": f"{dv_diff_pct:.4f}",
-                "today_dm": f"{today_dm:.4f}",
-                "prev_dm": f"{prev_dm:.4f}",
-                "dm_diff": f"{dm_diff:.4f}",
-                "d1": f"{d1_deg:4f}",
-                "d2": f"{d2_deg:.4f}",
+                "today_AV": f"{today_dv:.4f}",
+                "prev_AV": f"{prev_dv:.4f}",
+                "DV_percent": f"{dv_diff_pct:.4f}",
+                "today_MA": f"{today_dm:.4f}",
+                "prev_MA": f"{prev_dm:.4f}",
+                "DA": f"{dm_diff:.4f}",
+                "D1": f"{d1_deg:4f}",
+                "D2": f"{d2_deg:.4f}",
                 "prev_epoch_time_utc": prev_epoch_iso,
                 "epoch_diff_sec": f"{epoch_diff_sec:.3f}" if is_finite(epoch_diff_sec) else "nan",
                 "Bstar": bstar,
@@ -285,6 +284,7 @@ def main():
                 "AP_deg": ap,
                 "MA_deg": ma,
                 "MM_rev/day": mm,
+                "MeanAlt_km": malt
             })
 
     print(f"wrote: {OUT_CSV}")
