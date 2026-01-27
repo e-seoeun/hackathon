@@ -1,2 +1,2 @@
 identity=dldi0802@yonsei.ac.kr
-password=
+password=**dlwldud120102

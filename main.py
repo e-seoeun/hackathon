@@ -31,7 +31,7 @@ process3_plot.py
 
 
 * process0 
-spacetrack에서 원하는 기간동안의 decay message와 tip message를 다운받아 날짜별로 저장합니다.
+spacetrack에서 원하는 기간동안의 decay_data message와 tip_data message를 다운받아 날짜별로 저장합니다.
 spacetrack ID와 Password를 spacetrack_auth에 저장하는 과정이 필요합니다.
 
 * process1 
