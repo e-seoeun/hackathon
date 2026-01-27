@@ -155,7 +155,7 @@ def d1_d2_from_tracks_gnomonic_deg(
 
 
 # key: (norad_id, epoch_time_utc, site_lat, site_lon)
-Key = Tuple[str, str, str, str, str]
+Key = Tuple[str, str, str, str]
 
 def main():
     groups: Dict[Key, Dict[int, Dict[str, str]]] = defaultdict(dict)
@@ -181,7 +181,6 @@ def main():
 
     out_fields = [
         "norad_id",
-        "object_name",
         "epoch_time_utc",
         "site_lat_deg",
         "site_lon_deg",
@@ -202,7 +201,8 @@ def main():
         "AP_deg",
         "MA_deg",
         "MM_rev/day",
-        "MeanAlt_km"
+        "MeanAlt_km",
+        "object_name",
     ]
 
     with open(OUT_CSV, "w", encoding="utf-8-sig", newline="") as f:
@@ -264,7 +264,6 @@ def main():
 
             w.writerow({
                 "norad_id": norad_id,
-                "object_name": object_name,
                 "epoch_time_utc": epoch,
                 "site_lat_deg": site_lat,
                 "site_lon_deg": site_lon,
@@ -284,7 +283,8 @@ def main():
                 "AP_deg": ap,
                 "MA_deg": ma,
                 "MM_rev/day": mm,
-                "MeanAlt_km": malt
+                "MeanAlt_km": malt,
+                "object_name": object_name,
             })
 
     print(f"wrote: {OUT_CSV}")

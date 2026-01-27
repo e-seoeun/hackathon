@@ -213,7 +213,6 @@ def main():
 
     fieldnames = [
         "norad_id",
-        "object_name",
         "epoch_time_utc",
         "site_lat_deg",
         "site_lon_deg",
@@ -235,6 +234,7 @@ def main():
         "MA_deg",
         "MM_rev/day",
         "MeanAlt_km",
+        "object_name",
     ]
 
     with open(args.out, "w", newline="", encoding="utf-8-sig") as f:
@@ -291,7 +291,6 @@ def main():
                 w.writerow(
                     {
                         "norad_id": satno,
-                        "object_name": name,
                         "epoch_time_utc": _time_iso_utc(t0),
                         "site_lat_deg": f"{site_lat_deg:.4f}",
                         "site_lon_deg": f"{site_lon_deg:.4f}",
@@ -314,6 +313,6 @@ def main():
                         "MA_deg": f"{_safe_float(ma_deg):.4f}",
                         "MM_rev/day": f"{_safe_float(mm_rpd):.8f}",
                         "MeanAlt_km": f"{_safe_float(mean_alt_km):.4f}",
-
+                        "object_name": name,
                     }
                 )
