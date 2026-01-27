@@ -21,6 +21,17 @@ hackathon
         .
         .
         .
+ㄴresult
+    YYYYMMDD_result.csv (최종 결과 파일)
+    .
+    .
+    .
+    ㄴresult_raw
+        YYYYMMDD_result_raw.csv (중간 저장 파일)
+        .
+        .
+        .
+
 main.py
 process1_track.py
 process2_calculate.py

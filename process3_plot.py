@@ -6,8 +6,8 @@ import matplotlib.pyplot as plt
 
 from astropy.wcs import WCS
 
-IN_TRACK_CSV = "20250517_result_raw.csv"            
-IN_DVDM_CSV  = "20250517_result.csv"   
+IN_TRACK_CSV = "result/result_raw/20250517_result_raw.csv"
+IN_DVDM_CSV  = "result/20250517_result.csv"
 D2R = math.pi / 180.0
 
 def to_float(x):
@@ -79,7 +79,7 @@ def load_tracks_for_norad(path, norad_id, window_s=5):
             (row.get("site_lat_deg") or "").strip(),
             (row.get("site_lon_deg") or "").strip(),
             (row.get("site_alt_m") or "").strip(),
-            (row.get("sat_name") or "").strip(),
+            (row.get("object_name") or "").strip(),
             (row.get("epoch_diff_sec") or "").strip(),
         )
 
@@ -94,7 +94,7 @@ def load_tracks_for_norad(path, norad_id, window_s=5):
         "site_lat_deg": to_float(first_key[1]),
         "site_lon_deg": to_float(first_key[2]),
         "site_alt_m": to_float(first_key[3]),
-        "sat_name": first_key[4],
+        "object_name": first_key[4],
         "epoch_diff_sec": round(to_float(first_key[5])/3600, 2),
         "t_offset": [],
         "today_ra": [], "today_dec": [],
@@ -132,13 +132,13 @@ def load_dvdm_for_norad(path, norad_id):
             if (row.get("norad_id") or "").strip() != target:
                 continue
             return {
-                "today_dv": to_float(row.get("today_dv")),
-                "prev_dv":  to_float(row.get("prev_dv")),
-                "today_dm": to_float(row.get("today_dm")),
-                "prev_dm":  to_float(row.get("prev_dm")),
-                "dm_diff":  to_float(row.get("dm_diff")),
-                "d1":       to_float(row.get("d1")),
-                "d2":       to_float(row.get("d2")),
+                "today_AV": to_float(row.get("today_AV")),
+                "prev_AV":  to_float(row.get("prev_AV")),
+                "today_MA": to_float(row.get("today_MA")),
+                "prev_MA":  to_float(row.get("prev_MA")),
+                "DA":  to_float(row.get("DA")),
+                "D1":       to_float(row.get("D1")),
+                "D2":       to_float(row.get("D2")),
                 "epoch_time_utc": (row.get("epoch_time_utc") or "").strip(),
                 "epoch_diff_sec": to_float(row.get("epoch_diff_sec")),
             }
@@ -202,7 +202,7 @@ def mark_oriented_triangle_world(ax, ra_deg_arr, dec_deg_arr, transform,
 
 
 
-def create_wcs_axes(ra0_deg, dec0_deg, fov_ra_deg=10.0, fov_dec_deg=10.0, npix=1200, projection="TAN"):
+def create_wcs_axes(ra0_deg, dec0_deg, fov_ra_deg=100.0, fov_dec_deg=100.0, npix=1200, projection="TAN"):
     wcs = WCS(naxis=2)
     wcs.wcs.crpix = [npix/2 + 0.5, npix/2 + 0.5]
     wcs.wcs.crval = [ra0_deg, dec0_deg]
@@ -230,113 +230,118 @@ def create_wcs_axes(ra0_deg, dec0_deg, fov_ra_deg=10.0, fov_dec_deg=10.0, npix=1
 
     return fig, ax, wcs
 
+
 def main():
-    norad_id = input("NORAD ID 입력: ").strip()
+    while True:
+        norad_id = input("NORAD ID 입력 (q=종료): ").strip()
+        if norad_id.lower() == "q":
+            break
+        if norad_id == "":
+            continue
 
-    tr = load_tracks_for_norad(IN_TRACK_CSV, norad_id, window_s=5)
-    if tr is None:
-        print(f"[ERROR] {IN_TRACK_CSV}에서 norad_id={norad_id} 데이터를 못 찾음")
-        return
+        tr = load_tracks_for_norad(IN_TRACK_CSV, norad_id, window_s=5)
+        if tr is None:
+            print(f"[ERROR] {IN_TRACK_CSV}에서 norad_id={norad_id} 데이터를 못 찾음")
+            continue
 
-    dv = load_dvdm_for_norad(IN_DVDM_CSV, norad_id)
-    if dv is None:
-        print(f"[WARN] {IN_DVDM_CSV}에서 norad_id={norad_id} dv/dm/d1/d2를 못 찾음")
+        dv = load_dvdm_for_norad(IN_DVDM_CSV, norad_id)
+        if dv is None:
+            print(f"[WARN] {IN_DVDM_CSV}에서 norad_id={norad_id} dv/dm/d1/d2를 못 찾음")
 
-    # center: today 기준(없으면 prev 기준)
-    if len(tr["today_ra"]) >= 1:
-        ra_center, dec_center = choose_center(tr["today_ra"], tr["today_dec"])
-    else:
-        ra_center, dec_center = choose_center(tr["prev_ra"], tr["prev_dec"])
+        # center: today 기준(없으면 prev 기준)
+        if len(tr["today_ra"]) >= 1:
+            ra_center, dec_center = choose_center(tr["today_ra"], tr["today_dec"])
+        else:
+            ra_center, dec_center = choose_center(tr["prev_ra"], tr["prev_dec"])
 
-    # unwrap(경계 넘어가는 경우 대비)
-    today_ra_u = unwrap_about_center(tr["today_ra"], ra_center) if len(tr["today_ra"]) else np.array([])
-    prev_ra_u  = unwrap_about_center(tr["prev_ra"],  ra_center) if len(tr["prev_ra"])  else np.array([])
+        # unwrap(경계 넘어가는 경우 대비)
+        today_ra_u = unwrap_about_center(tr["today_ra"], ra_center) if len(tr["today_ra"]) else np.array([])
+        prev_ra_u  = unwrap_about_center(tr["prev_ra"],  ra_center) if len(tr["prev_ra"])  else np.array([])
 
-    # FOV: ra±5, dec±5
-    fov_ra_deg  = 30.0
-    fov_dec_deg = 30.0
+        # FOV
+        fov_ra_deg  = 100.0
+        fov_dec_deg = 100.0
 
-    fig, ax, wcs = create_wcs_axes(ra_center, dec_center, fov_ra_deg=fov_ra_deg, fov_dec_deg=fov_dec_deg,
-                                   npix=1200, projection="TAN")
-    world = ax.get_transform("world")
-
-    # plot: today / prev
-    if len(today_ra_u):
-        ax.plot(today_ra_u, tr["today_dec"], "-", linewidth=2.5, alpha=0.8,
-                transform=world, zorder=5, label="today", color="red")
-        '''ax.plot(today_ra_u, tr["today_dec"], "o", markersize=4, alpha=0.8,
-                transform=world, zorder=6)'''
-        mark_oriented_triangle_world(ax, today_ra_u, tr["today_dec"], world,
-                                     size=12, color="red", ahead_px=2, z=20)
-
-
-    if len(prev_ra_u):
-        ax.plot(prev_ra_u, tr["prev_dec"], "-", linewidth=2.5, alpha=0.8,
-                transform=world, zorder=4, label="prev", color="royalblue")
-        '''ax.plot(prev_ra_u, tr["prev_dec"], "o", markersize=4, alpha=0.8,
-                transform=world, zorder=4)'''
-        mark_oriented_triangle_world(ax, prev_ra_u, tr["prev_dec"], world,
-                                     size=12, color="royalblue", ahead_px=2, z=19)
-
-    # title
-    epoch = tr['epoch_time_utc'].replace("T", " ").replace("Z", "")
-    object_name = tr['sat_name']
-    diff_time = tr['epoch_diff_sec']
-    ax.set_title(f"TLE date 2025-05-17 \n NORAD ID {norad_id} | Epoch {epoch}", fontsize=18)
-
-    # bottom text (dv/dm/d1/d2)
-    lines = []
-    if object_name:
-        ax.text(
-            0.02, 0.19,  # ← 살짝 위로
-            object_name,
-            transform=ax.transAxes,
-            ha="left", va="bottom",
-            fontsize=18,  # ← 크게
-            fontweight="bold",
-            color="black",
-            bbox=dict(boxstyle="round,pad=0.25", fc="white", ec="none", alpha=0.85),
-            zorder=101
+        fig, ax, wcs = create_wcs_axes(
+            ra_center, dec_center,
+            fov_ra_deg=fov_ra_deg, fov_dec_deg=fov_dec_deg,
+            npix=1200, projection="TAN"
         )
-    if dv is not None:
-        if is_finite(dv.get("today_dv")) and is_finite(dv.get("prev_dv")):
-            dvper = (dv["today_dv"] - dv["prev_dv"]) / dv["today_dv"] * 100
-            lines.append(f"AV   {dv['today_dv']:.4f} / {dv['prev_dv']:.4f} (DV {dv['today_dv']-dv['prev_dv']:.4f}°/s, {dvper:+.1f}%)")
-        elif is_finite(dv.get("today_dv")):
-            lines.append(f"AV   {dv['today_dv']:.4f}  (deg/s)")
+        world = ax.get_transform("world")
 
+        # plot: today / prev
+        if len(today_ra_u):
+            ax.plot(today_ra_u, tr["today_dec"], "-", linewidth=2.5, alpha=0.8,
+                    transform=world, zorder=5, label="today", color="red")
+            mark_oriented_triangle_world(ax, today_ra_u, tr["today_dec"], world,
+                                         size=12, color="red", ahead_px=2, z=20)
 
-        if is_finite(dv.get("today_dm")) and is_finite(dv.get("prev_dm")):
-            if is_finite(dv.get("dm_diff")):
-                lines.append(f"MA   {dv['today_dm']:.1f} / {dv['prev_dm']:.1f}  (DA {dv['dm_diff']:+.1f}°)")
-            else:
-                lines.append(f"MA   {dv['today_dm']:.1f} / {dv['prev_dm']:.1f}")
-        elif is_finite(dv.get("today_dm")):
-            lines.append(f"Da   {dv['today_dm']:.1f}")
+        if len(prev_ra_u):
+            ax.plot(prev_ra_u, tr["prev_dec"], "-", linewidth=2.5, alpha=0.8,
+                    transform=world, zorder=4, label="prev", color="royalblue")
+            mark_oriented_triangle_world(ax, prev_ra_u, tr["prev_dec"], world,
+                                         size=12, color="royalblue", ahead_px=2, z=19)
 
-        if is_finite(dv.get("d1")):
-            lines.append(f"D1   {dv['d1']:.2f}°")
-        if is_finite(dv.get("d2")):
-            lines.append(f"D2   {dv['d2']:+.2f}°")
+        # title
+        epoch = tr["epoch_time_utc"].replace("T", " ").replace("Z", "")
+        object_name = tr["object_name"]
+        diff_time = tr["epoch_diff_sec"]
+        ax.set_title(f"TLE date 2025-05-17 \n NORAD ID {norad_id} | Epoch {epoch}", fontsize=18)
 
-        if diff_time:
-            lines.append(f"DT   {diff_time} h")
+        # bottom text
+        lines = []
+        if object_name:
+            ax.text(
+                0.02, 0.19,
+                object_name,
+                transform=ax.transAxes,
+                ha="left", va="bottom",
+                fontsize=18,
+                fontweight="bold",
+                color="black",
+                bbox=dict(boxstyle="round,pad=0.25", fc="white", ec="none", alpha=0.85),
+                zorder=101
+            )
 
-    if lines:
-        ax.text(
-            0.02, 0.02, "\n".join(lines),
-            transform=ax.transAxes, ha="left", va="bottom",
-            fontsize=14, color="black",
-            bbox=dict(boxstyle="round,pad=0.25", fc="white", ec="none", alpha=0.85),
-            zorder=100
-        )
+        if dv is not None:
+            if is_finite(dv.get("today_AV")) and is_finite(dv.get("prev_AV")):
+                dvper = (dv["today_AV"] - dv["prev_AV"]) / dv["today_AV"] * 100
+                lines.append(f"AV   {dv['today_AV']:.4f} / {dv['prev_AV']:.4f} (DV {dv['today_AV']-dv['prev_AV']:.4f}°/s, {dvper:+.1f}%)")
+            elif is_finite(dv.get("today_AV")):
+                lines.append(f"AV   {dv['today_AV']:.4f}  (deg/s)")
 
-    # legend
-    ax.legend(loc="upper right", framealpha=0.0, edgecolor="none", fontsize=14)
+            if is_finite(dv.get("today_MA")) and is_finite(dv.get("prev_MA")):
+                if is_finite(dv.get("DA")):
+                    lines.append(f"MA   {dv['today_MA']:.1f} / {dv['prev_MA']:.1f}  (DA {dv['DA']:+.1f}°)")
+                else:
+                    lines.append(f"MA   {dv['today_MA']:.1f} / {dv['prev_MA']:.1f}")
+            elif is_finite(dv.get("today_dm")):
+                lines.append(f"Da   {dv['today_MA']:.1f}")
 
+            if is_finite(dv.get("D1")):
+                lines.append(f"D1   {dv['D1']:.2f}°")
+            if is_finite(dv.get("D2")):
+                lines.append(f"D2   {dv['D2']:+.2f}°")
 
-    plt.tight_layout()
-    plt.show()
+            if diff_time:
+                lines.append(f"DT   {diff_time} h")
+
+        if lines:
+            ax.text(
+                0.02, 0.02, "\n".join(lines),
+                transform=ax.transAxes, ha="left", va="bottom",
+                fontsize=14, color="black",
+                bbox=dict(boxstyle="round,pad=0.25", fc="white", ec="none", alpha=0.85),
+                zorder=100
+            )
+
+        ax.legend(loc="upper right", framealpha=0.0, edgecolor="none", fontsize=14)
+
+        plt.tight_layout()
+        plt.show()
+
+        # 창 닫고 다음 입력 받기 (메모리 정리)
+        plt.close(fig)
 
 if __name__ == "__main__":
     main()

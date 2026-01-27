@@ -149,22 +149,22 @@ def topocentric_angles(sat: EarthSatellite, t, site):
     return ra_deg, dec_deg, az_deg, el_deg
 
 def mean_altitude_km_from_tle(sat: EarthSatellite) -> float:
-    """
-    TLE mean motion(no_kozai)로부터 semi-major axis a를 구해
-    mean altitude ~= a - R_E (km)를 반환
-    """
     m = sat.model
-    n_rad_per_min = float(getattr(m, "no_kozai", float("nan")))
+
+    n_rad_per_min = getattr(m, "no_kozai", None)
+    if n_rad_per_min is None:
+        n_rad_per_min = getattr(m, "no", float("nan"))  # fallback
+
+    n_rad_per_min = float(n_rad_per_min)
     if (not math.isfinite(n_rad_per_min)) or n_rad_per_min <= 0:
         return float("nan")
 
     mu_km3_s2 = 398600.4418
-    re_km = 6378.137  # WGS-84 equatorial radius
-
+    re_km = 6378.137
     n_rad_per_s = n_rad_per_min / 60.0
     a_km = (mu_km3_s2 / (n_rad_per_s ** 2)) ** (1.0 / 3.0)
-
     return a_km - re_km
+
 
 def is_leo_by_mean_altitude(sat: EarthSatellite, max_alt_km=2000.0) -> bool:
     h_km = mean_altitude_km_from_tle(sat)
