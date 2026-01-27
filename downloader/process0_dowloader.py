@@ -1,6 +1,6 @@
 '''
 spacetrack_auth.txt파일에 spacetrack의 ID와 Password를 입력한 후 실행됩니다.
-start day부터 end day의 전 날까지의 기간동안 spacettrack에 저장되어있는 decay message와 tip message를 다운받아 날짜별로 저장합니다.
+start day부터 end day의 전 날까지의 기간동안 spacettrack에 저장되어있는 decay_data message와 tip_data message를 다운받아 날짜별로 저장합니다.
 SSL관련 내용은 GPT가 알려준 방법입니다.
 '''
 from __future__ import annotations
@@ -137,7 +137,7 @@ def write_csv(rows: List[Dict], out_csv: str) -> None:
 
 
 def fetch_tip_for_day(session: requests.Session, day_utc: date) -> List[Dict]:
-    sample = get_json(session, f"{QUERY_BASE}/class/tip/limit/1/format/json")
+    sample = get_json(session, f"{QUERY_BASE}/class/tip_data/limit/1/format/json")
     if not sample:
         return []
     date_field = detect_date_field(
@@ -148,19 +148,19 @@ def fetch_tip_for_day(session: requests.Session, day_utc: date) -> List[Dict]:
     start = datetime(day_utc.year, day_utc.month, day_utc.day, 0, 0, 0, tzinfo=timezone.utc)
     end = start + timedelta(days=1)
 
-    rows = get_json(session, build_range_url("tip", date_field, start, end))
+    rows = get_json(session, build_range_url("tip_data", date_field, start, end))
     for r in rows:
         r["query_day_utc"] = day_utc.isoformat()
         r["query_date_field"] = date_field
-        r["message_type"] = "tip"
+        r["message_type"] = "tip_data"
     return rows
 
 
 def fetch_decay_for_day(session: requests.Session, day_utc: date) -> List[Dict]:
-    sample = get_json(session, f"{QUERY_BASE}/class/decay/limit/1/format/json")
+    sample = get_json(session, f"{QUERY_BASE}/class/decay_data/limit/1/format/json")
     if not sample:
         return []
-    # decay 샘플 쿼리 문서에 DECAY_EPOCH가 등장하므로 1순위로 둠
+    # decay_data 샘플 쿼리 문서에 DECAY_EPOCH가 등장하므로 1순위로 둠
     date_field = detect_date_field(
         sample[0],
         candidates=["DECAY_EPOCH", "EPOCH", "MESSAGE_EPOCH", "INSERT_DATE", "CREATED", "CREATE_DATE"],
@@ -169,11 +169,11 @@ def fetch_decay_for_day(session: requests.Session, day_utc: date) -> List[Dict]:
     start = datetime(day_utc.year, day_utc.month, day_utc.day, 0, 0, 0, tzinfo=timezone.utc)
     end = start + timedelta(days=1)
 
-    rows = get_json(session, build_range_url("decay", date_field, start, end))
+    rows = get_json(session, build_range_url("decay_data", date_field, start, end))
     for r in rows:
         r["query_day_utc"] = day_utc.isoformat()
         r["query_date_field"] = date_field
-        r["message_type"] = "decay"
+        r["message_type"] = "decay_data"
     return rows
 
 
@@ -186,15 +186,13 @@ def daterange(d0: date, d1_exclusive: date):
 
 def main():
     auth = load_auth_txt("spacetrack_auth.txt")
-
-    base_dir = "spacetrack_messages"
-    tip_dir = os.path.join(base_dir, "tip")
-    decay_dir = os.path.join(base_dir, "decay")
+    tip_dir = os.path.join("..", "repository", "tip_data")
+    decay_dir = os.path.join("..", "repository", "decay_data")
     os.makedirs(tip_dir, exist_ok=True)
     os.makedirs(decay_dir, exist_ok=True)
 
     # -------- 1년치 범위 설정 --------
-    #start day부터 end day -1 일 까지의 tip, decay자료를 다운받습니다.
+    #start day부터 end day -1 일 까지의 tip_data, decay자료를 다운받습니다.
     start_day = date(2025, 1, 1)
     end_day_exclusive = date(2025, 1, 4)
 
